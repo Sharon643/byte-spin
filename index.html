@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEPARTURES — Topic Roulette</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d0c;
+    --panel:#111513;
+    --panel-2:#171c19;
+    --flap:#181d1a;
+    --flap-edge:#0d100e;
+    --border:#262b27;
+    --amber:#ffb020;
+    --amber-dim:#8a5f16;
+    --amber-glow: rgba(255,176,32,0.35);
+    --cyan:#5fd4c0;
+    --red:#ff5d5d;
+    --text:#eef1ec;
+    --text-dim:#8a938c;
+    --text-faint:#525b54;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(255,176,32,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+
+  .wrap{ max-width:920px; margin:0 auto; }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    padding-bottom:16px; margin-bottom:22px;
+    flex-wrap:wrap; gap:10px;
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px;}
+  .brand .glyph{ color:var(--amber); font-size:22px; }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:26px; letter-spacing:0.06em;
+    margin:0; color:var(--text);
+  }
+  .tagline{ color:var(--text-dim); font-size:12.5px; letter-spacing:0.03em; margin-top:2px;}
+  .clock-block{ text-align:right; }
+  .clock{ font-size:20px; color:var(--amber); font-weight:600; letter-spacing:0.05em;}
+  .terminal-id{ color:var(--text-faint); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;}
+
+  /* ---------- Board panel ---------- */
+  .board-panel{
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:22px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.35);
+  }
+  .board-header{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px; letter-spacing:0.14em; color:var(--text-faint);
+    text-transform:uppercase; margin-bottom:14px; padding:0 4px;
+  }
+  .status-pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:3px 10px; border-radius:20px; border:1px solid var(--border);
+    font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase;
+  }
+  .status-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--text-faint); }
+  .status-pill.ready .dot{ background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+  .status-pill.boarding .dot{ background:var(--amber); box-shadow:0 0 8px var(--amber); animation:pulse 1s infinite;}
+  .status-pill.departed .dot{ background:var(--red); box-shadow:0 0 8px var(--red);}
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+  .flap-row{
+    display:grid; grid-template-columns:110px 1fr; align-items:stretch;
+    border-top:1px solid var(--border);
+  }
+  .flap-row:first-of-type{ border-top:none; }
+  .flap-label{
+    display:flex; align-items:center;
+    font-size:11px; letter-spacing:0.14em; color:var(--text-faint);
+    text-transform:uppercase; padding:14px 6px;
+  }
+  .flap-viewport{ perspective:800px; padding:10px 0; }
+  .flap-card{
+    background:var(--flap);
+    border:1px solid var(--flap-edge);
+    border-radius:3px;
+    padding:14px 18px;
+    min-height:30px;
+    display:flex; align-items:center;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+    transform-style:preserve-3d;
+    transform-origin:center;
+  }
+  .flap-card::after{
+    content:''; position:absolute; left:0; right:0; top:50%; height:1px;
+    background:rgba(0,0,0,0.55);
+  }
+  .flap-card{ position:relative; overflow:hidden; }
+  .flap-text{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.04em;
+    color:var(--amber);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    width:100%;
+  }
+  #row-domain .flap-text{ font-size:15px; font-weight:600; }
+  #row-topic .flap-text{ font-size:20px; font-weight:600; white-space:normal; line-height:1.25; }
+  #row-gate .flap-text{ font-size:15px; font-weight:600; }
+  #row-note .flap-text{ font-size:13px; font-weight:400; color:var(--text-dim); white-space:normal; letter-spacing:0.01em;}
+  #row-note .flap-card{ min-height:44px; }
+
+  .flap-card.flipping{ animation:flip 0.11s linear; }
+  @keyframes flip{
+    0%{ transform:rotateX(0deg); }
+    50%{ transform:rotateX(-90deg); }
+    51%{ transform:rotateX(90deg); }
+    100%{ transform:rotateX(0deg); }
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    margin-top:18px; padding-top:16px; border-top:1px solid var(--border);
+  }
+  .chip{
+    background:transparent; border:1px solid var(--border); color:var(--text-dim);
+    font-family:inherit; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    padding:7px 12px; border-radius:20px; cursor:pointer; transition:all .15s ease;
+  }
+  .chip:hover{ border-color:var(--amber-dim); color:var(--text); }
+  .chip.active{ background:var(--amber); border-color:var(--amber); color:#151300; font-weight:600;}
+  .spacer{ flex:1; }
+  .btn-spin{
+    background:var(--amber); color:#151300; border:none; font-family:'Space Grotesk',sans-serif;
+    font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+    padding:13px 26px; border-radius:4px; cursor:pointer; font-size:13.5px;
+    box-shadow:0 0 0 rgba(255,176,32,0.5); transition:transform .1s ease, box-shadow .2s ease;
+  }
+  .btn-spin:hover{ box-shadow:0 0 22px var(--amber-glow); transform:translateY(-1px); }
+  .btn-spin:active{ transform:translateY(0px); }
+  .btn-spin:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; transform:none; }
+
+  /* ---------- Timer panel ---------- */
+  .timer-panel{
+    margin-top:18px; display:grid; grid-template-columns:auto 1fr; gap:26px;
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:20px 22px; align-items:center;
+  }
+  .ring-wrap{ position:relative; width:110px; height:110px; }
+  .ring-wrap svg{ transform:rotate(-90deg); }
+  .ring-bg{ fill:none; stroke:var(--border); stroke-width:7; }
+  .ring-fg{ fill:none; stroke:var(--amber); stroke-width:7; stroke-linecap:round;
+    transition:stroke-dashoffset 1s linear, stroke 0.3s ease; }
+  .ring-time{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:22px; font-weight:600; color:var(--text); font-family:'IBM Plex Mono',monospace;
+  }
+  .timer-actions{ display:flex; flex-direction:column; gap:10px; }
+  .timer-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .btn{
+    background:transparent; border:1px solid var(--border); color:var(--text);
+    font-family:inherit; font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+    padding:9px 16px; border-radius:4px; cursor:pointer; transition:all .15s ease;
+  }
+  .btn:hover{ border-color:var(--text-dim); }
+  .btn.primary{ border-color:var(--cyan); color:var(--cyan); }
+  .btn.primary:hover{ background:rgba(95,212,192,0.08); }
+  .btn.done{ border-color:var(--amber); color:var(--amber); }
+  .btn.done:hover{ background:rgba(255,176,32,0.08); }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .timer-hint{ color:var(--text-faint); font-size:11.5px; letter-spacing:0.02em; }
+
+  /* ---------- Log ---------- */
+  .log-panel{ margin-top:18px; }
+  .log-title{
+    font-size:11px; letter-spacing:0.14em; color:var(--text-faint); text-transform:uppercase;
+    margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .log-title button{
+    background:none; border:none; color:var(--text-faint); font-family:inherit;
+    font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer;
+    text-decoration:underline; text-underline-offset:3px;
+  }
+  .log-title button:hover{ color:var(--text-dim); }
+  .log-empty{
+    color:var(--text-faint); font-size:12.5px; padding:16px; text-align:center;
+    border:1px dashed var(--border); border-radius:6px;
+  }
+  .log-entry{
+    display:grid; grid-template-columns:56px 90px 1fr 90px; gap:12px; align-items:center;
+    padding:10px 12px; border-bottom:1px solid var(--border); font-size:12.5px;
+  }
+  .log-entry:last-child{ border-bottom:none; }
+  .log-time{ color:var(--text-faint); }
+  .log-cat{ color:var(--text-dim); font-size:11px; letter-spacing:0.04em; }
+  .log-title-txt{ color:var(--text); }
+  .log-status{ text-align:right; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; }
+  .log-status.ok{ color:var(--cyan); }
+  .log-status.missed{ color:var(--red); }
+
+  footer{ text-align:center; color:var(--text-faint); font-size:11px; margin-top:28px; letter-spacing:0.03em;}
+
+  @media (max-width: 620px){
+    .flap-row{ grid-template-columns:80px 1fr; }
+    #row-topic .flap-text{ font-size:16px; }
+    .timer-panel{ grid-template-columns:1fr; justify-items:center; text-align:center; }
+    .log-entry{ grid-template-columns:44px 1fr; grid-template-rows:auto auto; row-gap:4px; }
+    .log-cat, .log-status{ display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand"><span class="glyph">⟡</span><h1>DEPARTURES</h1></div>
+      <div class="tagline">Pull a topic. Explain it before the gate closes.</div>
+    </div>
+    <div class="clock-block">
+      <div class="clock" id="clock">00:00:00</div>
+      <div class="terminal-id">TERMINAL — AI ENG / SOFTWARE DEV</div>
+    </div>
+  </header>
+
+  <div class="board-panel">
+    <div class="board-header">
+      <span>Next Departure</span>
+      <span class="status-pill ready" id="status-pill"><span class="dot"></span><span id="status-text">Ready</span></span>
+    </div>
+
+    <div class="flap-row" id="row-domain">
+      <div class="flap-label">Domain</div>
+      <div class="flap-viewport"><div class="flap-card"><div class="flap-text" id="text-domain">— — — — —</div></div></div>
+    </div>
+    <div class="flap-row" id="row-topic">
+      <div class="flap-label">Topic</div>
+      <div class="flap-viewport"><div class="flap-card"><div class="flap-text" id="text-topic">PRESS SPIN TO BEGIN</div></div></div>
+    </div>
+    <div class="flap-row" id="row-gate">
+      <div class="flap-label">Gate</div>
+      <div class="flap-viewport"><div class="flap-card"><div class="flap-text" id="text-gate">— — —</div></div></div>
+    </div>
+    <div class="flap-row" id="row-note">
+      <div class="flap-label">Angle</div>
+      <div class="flap-viewport"><div class="flap-card"><div class="flap-text" id="text-note">A starting angle for your explanation will appear here.</div></div></div>
+    </div>
+
+    <div class="controls">
+      <button class="chip active" data-cat="ALL">All</button>
+      <button class="chip" data-cat="AI ENG">AI Eng</button>
+      <button class="chip" data-cat="SOFTWARE">Software</button>
+      <button class="chip" data-cat="SYSTEMS">Systems</button>
+      <button class="chip" data-cat="DATA/ML">Data/ML</button>
+      <button class="chip" data-cat="PRACTICE">Practice</button>
+      <div class="spacer"></div>
+      <button class="btn-spin" id="btn-spin">Spin</button>
+    </div>
+  </div>
+
+  <div class="timer-panel">
+    <div class="ring-wrap">
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        <circle class="ring-bg" cx="55" cy="55" r="48"></circle>
+        <circle class="ring-fg" id="ring-fg" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="0"></circle>
+      </svg>
+      <div class="ring-time" id="ring-time">1:00</div>
+    </div>
+    <div class="timer-actions">
+      <div class="timer-row">
+        <button class="btn primary" id="btn-start" disabled>Start 60s</button>
+        <button class="btn" id="btn-reset" disabled>Reset</button>
+        <button class="btn done" id="btn-explained" disabled>Mark explained</button>
+      </div>
+      <div class="timer-hint" id="timer-hint">Spin the board to pull a topic, then start the clock and explain it out loud.</div>
+    </div>
+  </div>
+
+  <div class="log-panel">
+    <div class="log-title"><span>Flight Log</span><button id="btn-clear-log">Clear</button></div>
+    <div id="log-list"><div class="log-empty">No departures yet. Spin the board to log your first topic.</div></div>
+  </div>
+
+  <footer>Speak for 60 seconds. No notes, no slides — just say what you know.</footer>
+</div>
+
+<script>
+(function(){
+  const TOPICS = [
+    // AI ENG
+    {cat:"AI ENG", title:"Retrieval-Augmented Generation", gate:"CORE", note:"Why ground an LLM in external data instead of only fine-tuning it?"},
+    {cat:"AI ENG", title:"Prompt Engineering vs Fine-Tuning", gate:"BASIC", note:"When does changing the prompt beat changing the weights?"},
+    {cat:"AI ENG", title:"Vector Embeddings & Similarity Search", gate:"CORE", note:"How do you turn meaning into numbers you can compare?"},
+    {cat:"AI ENG", title:"LLM Agents & Tool Use", gate:"CORE", note:"What turns a chat model into something that can take actions?"},
+    {cat:"AI ENG", title:"Context Window Management", gate:"CORE", note:"What do you do when the conversation no longer fits?"},
+    {cat:"AI ENG", title:"Hallucination: Causes & Mitigations", gate:"CORE", note:"Why do models state wrong things confidently, and what curbs it?"},
+    {cat:"AI ENG", title:"Evals for LLM Systems", gate:"ADV", note:"How do you measure quality when there's no single right answer?"},
+    {cat:"AI ENG", title:"Chain-of-Thought Prompting", gate:"BASIC", note:"Why does asking a model to 'think step by step' help?"},
+    {cat:"AI ENG", title:"Fine-Tuning vs LoRA / PEFT", gate:"ADV", note:"How do you adapt a huge model without retraining all of it?"},
+    {cat:"AI ENG", title:"Token Economics & Cost Optimization", gate:"BASIC", note:"Where does the money actually go in an LLM product?"},
+    {cat:"AI ENG", title:"Function Calling & Structured Outputs", gate:"CORE", note:"How do you get reliable JSON out of a model that predicts text?"},
+    {cat:"AI ENG", title:"Multi-Agent Orchestration", gate:"ADV", note:"When do multiple specialized agents beat one generalist?"},
+    {cat:"AI ENG", title:"Guardrails & Safety Layers", gate:"CORE", note:"What sits between the model and the user to catch bad outputs?"},
+    {cat:"AI ENG", title:"Vector Databases", gate:"BASIC", note:"What makes a database good at nearest-neighbor search at scale?"},
+    {cat:"AI ENG", title:"Model Distillation & Quantization", gate:"ADV", note:"How do you shrink a model without losing what makes it useful?"},
+    {cat:"AI ENG", title:"RLHF", gate:"ADV", note:"How does human preference data shape model behavior?"},
+    {cat:"AI ENG", title:"Semantic Caching for LLM Apps", gate:"CORE", note:"How do you avoid paying for the same answer twice?"},
+
+    // SOFTWARE
+    {cat:"SOFTWARE", title:"SOLID Principles", gate:"BASIC", note:"Pick one letter and defend it with a concrete example."},
+    {cat:"SOFTWARE", title:"Design Patterns: Strategy vs Factory", gate:"CORE", note:"When would you actually reach for each one?"},
+    {cat:"SOFTWARE", title:"Code Review Best Practices", gate:"BASIC", note:"What makes a review useful instead of just gatekeeping?"},
+    {cat:"SOFTWARE", title:"Technical Debt", gate:"CORE", note:"How do you decide when to pay it down versus ship around it?"},
+    {cat:"SOFTWARE", title:"Test-Driven Development", gate:"CORE", note:"What does writing the test first actually buy you?"},
+    {cat:"SOFTWARE", title:"Dependency Injection", gate:"CORE", note:"What problem does 'don't construct your own dependencies' solve?"},
+    {cat:"SOFTWARE", title:"API Versioning Strategies", gate:"CORE", note:"How do you change a contract without breaking everyone using it?"},
+    {cat:"SOFTWARE", title:"Idempotency in APIs", gate:"CORE", note:"Why does 'safe to retry' matter so much in distributed systems?"},
+    {cat:"SOFTWARE", title:"Monorepo vs Polyrepo", gate:"BASIC", note:"What trade-off are teams actually making here?"},
+    {cat:"SOFTWARE", title:"Feature Flags & Progressive Rollouts", gate:"BASIC", note:"How do you ship risky code without risking everyone at once?"},
+    {cat:"SOFTWARE", title:"Static vs Dynamic Typing", gate:"BASIC", note:"What do you trade for compile-time safety?"},
+    {cat:"SOFTWARE", title:"Clean / Hexagonal Architecture", gate:"ADV", note:"Why keep business logic ignorant of frameworks and databases?"},
+    {cat:"SOFTWARE", title:"Refactoring Legacy Code Safely", gate:"CORE", note:"How do you change code you don't fully trust yet?"},
+    {cat:"SOFTWARE", title:"Pair Programming", gate:"BASIC", note:"What does it actually improve, and what does it cost?"},
+    {cat:"SOFTWARE", title:"Error Handling Philosophies", gate:"CORE", note:"Exceptions, return codes, or result types — what's the real trade-off?"},
+
+    // SYSTEMS
+    {cat:"SYSTEMS", title:"CAP Theorem", gate:"CORE", note:"Why can't a distributed system have all three, and which do you give up?"},
+    {cat:"SYSTEMS", title:"Load Balancing Strategies", gate:"BASIC", note:"How does a system decide which server handles a request?"},
+    {cat:"SYSTEMS", title:"Database Indexing", gate:"BASIC", note:"Why does adding one line of SQL make a query 1000x faster?"},
+    {cat:"SYSTEMS", title:"Caching Strategies", gate:"CORE", note:"Write-through vs write-back vs write-around — when does each fit?"},
+    {cat:"SYSTEMS", title:"Message Queues vs Event Streams", gate:"CORE", note:"Kafka isn't RabbitMQ — what's the actual difference in shape?"},
+    {cat:"SYSTEMS", title:"Horizontal vs Vertical Scaling", gate:"BASIC", note:"When does 'add a bigger machine' stop working?"},
+    {cat:"SYSTEMS", title:"Consistent Hashing", gate:"ADV", note:"How do you add a server without reshuffling all your data?"},
+    {cat:"SYSTEMS", title:"Rate Limiting Algorithms", gate:"CORE", note:"Token bucket vs sliding window — what changes in behavior?"},
+    {cat:"SYSTEMS", title:"Circuit Breaker Pattern", gate:"CORE", note:"How do you stop one failing service from taking down everything?"},
+    {cat:"SYSTEMS", title:"Containers vs VMs", gate:"BASIC", note:"What's actually being virtualized in each case?"},
+    {cat:"SYSTEMS", title:"Service Mesh", gate:"ADV", note:"What does it handle that your services shouldn't have to?"},
+    {cat:"SYSTEMS", title:"Database Sharding", gate:"ADV", note:"How do you split one huge table across many machines?"},
+    {cat:"SYSTEMS", title:"Eventual Consistency", gate:"CORE", note:"What does it feel like to a user when data isn't consistent yet?"},
+    {cat:"SYSTEMS", title:"CDN Fundamentals", gate:"BASIC", note:"Why does putting content closer to the user change everything?"},
+    {cat:"SYSTEMS", title:"Zero-Downtime Deployments", gate:"CORE", note:"How do you ship new code while traffic keeps flowing?"},
+
+    // DATA/ML
+    {cat:"DATA/ML", title:"Overfitting vs Underfitting", gate:"BASIC", note:"What does each look like on a training curve, and why?"},
+    {cat:"DATA/ML", title:"Bias-Variance Tradeoff", gate:"CORE", note:"Why can't you minimize both at once?"},
+    {cat:"DATA/ML", title:"Gradient Descent", gate:"BASIC", note:"How does a model actually learn from its mistakes?"},
+    {cat:"DATA/ML", title:"Precision vs Recall", gate:"BASIC", note:"Why would you ever want low recall on purpose?"},
+    {cat:"DATA/ML", title:"Feature Engineering", gate:"CORE", note:"Why does the input representation matter as much as the model?"},
+    {cat:"DATA/ML", title:"ETL vs ELT", gate:"BASIC", note:"Why did the order of these letters start to matter more?"},
+    {cat:"DATA/ML", title:"A/B Testing Fundamentals", gate:"CORE", note:"How do you know a result is real and not noise?"},
+    {cat:"DATA/ML", title:"Transformer Attention", gate:"ADV", note:"What does 'attention' actually let a model do?"},
+    {cat:"DATA/ML", title:"Batch vs Stream Processing", gate:"CORE", note:"When do you need the answer now instead of tonight?"},
+    {cat:"DATA/ML", title:"Data Drift & Model Monitoring", gate:"CORE", note:"How does a model quietly go stale in production?"},
+    {cat:"DATA/ML", title:"Cross-Validation", gate:"BASIC", note:"Why not just test on a single held-out split?"},
+    {cat:"DATA/ML", title:"Backpropagation", gate:"ADV", note:"How does an error at the output reach every weight in the network?"},
+    {cat:"DATA/ML", title:"Class Imbalance Handling", gate:"CORE", note:"Why is 99% accuracy sometimes a terrible result?"},
+    {cat:"DATA/ML", title:"Feature Stores", gate:"ADV", note:"What problem shows up once ten models want the same feature?"},
+    {cat:"DATA/ML", title:"Embeddings vs One-Hot Encoding", gate:"BASIC", note:"Why does dense beat sparse for representing categories?"},
+
+    // PRACTICE
+    {cat:"PRACTICE", title:"CI/CD Pipelines", gate:"BASIC", note:"What actually happens between a commit and a deploy?"},
+    {cat:"PRACTICE", title:"Blameless Postmortems", gate:"CORE", note:"Why focus on the system instead of who made the mistake?"},
+    {cat:"PRACTICE", title:"Agile vs Waterfall", gate:"BASIC", note:"What kind of uncertainty does each approach assume?"},
+    {cat:"PRACTICE", title:"On-Call & Alert Fatigue", gate:"CORE", note:"Why do too many alerts make a system less safe?"},
+    {cat:"PRACTICE", title:"Observability: Logs, Metrics, Traces", gate:"CORE", note:"When do you reach for each one during an incident?"},
+    {cat:"PRACTICE", title:"Trunk-Based Development", gate:"CORE", note:"What breaks when everyone works on long-lived branches?"},
+    {cat:"PRACTICE", title:"Code Ownership Models", gate:"BASIC", note:"Strong ownership vs collective ownership — what's the trade?"},
+    {cat:"PRACTICE", title:"Estimating Software Projects", gate:"BASIC", note:"Why are estimates so often wrong, and in one direction?"},
+    {cat:"PRACTICE", title:"Documentation as a Practice", gate:"BASIC", note:"What makes docs get read instead of ignored?"},
+    {cat:"PRACTICE", title:"Least Privilege Principle", gate:"CORE", note:"Why give systems and people the least access that still works?"}
+  ];
+
+  const CAT_LABELS = { "AI ENG":"AI ENGINEERING", "SOFTWARE":"SOFTWARE DEV", "SYSTEMS":"SYSTEMS & INFRA", "DATA/ML":"DATA & ML", "PRACTICE":"PRACTICE & PROCESS" };
+
+  let activeCats = new Set(["ALL"]);
+  let current = null;
+  let spinning = false;
+  let timerInterval = null;
+  let secondsLeft = 60;
+  let timerRunning = false;
+  let log = [];
+
+  const els = {
+    domain: document.getElementById('text-domain'),
+    topic: document.getElementById('text-topic'),
+    gate: document.getElementById('text-gate'),
+    note: document.getElementById('text-note'),
+    cardDomain: document.querySelector('#row-domain .flap-card'),
+    cardTopic: document.querySelector('#row-topic .flap-card'),
+    cardGate: document.querySelector('#row-gate .flap-card'),
+    cardNote: document.querySelector('#row-note .flap-card'),
+    spinBtn: document.getElementById('btn-spin'),
+    startBtn: document.getElementById('btn-start'),
+    resetBtn: document.getElementById('btn-reset'),
+    explainedBtn: document.getElementById('btn-explained'),
+    ringFg: document.getElementById('ring-fg'),
+    ringTime: document.getElementById('ring-time'),
+    statusPill: document.getElementById('status-pill'),
+    statusText: document.getElementById('status-text'),
+    timerHint: document.getElementById('timer-hint'),
+    logList: document.getElementById('log-list'),
+    clock: document.getElementById('clock')
+  };
+
+  const RING_CIRC = 2 * Math.PI * 48;
+
+  function tickClock(){
+    const d = new Date();
+    els.clock.textContent = d.toLocaleTimeString('en-GB', { hour12:false });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  function setStatus(state){
+    els.statusPill.className = 'status-pill ' + state;
+    els.statusText.textContent = state === 'ready' ? 'Ready' : state === 'boarding' ? 'Boarding' : 'Departed';
+  }
+
+  function flip(el, text){
+    el.parentElement.classList.remove('flipping');
+    void el.parentElement.offsetWidth;
+    el.parentElement.classList.add('flipping');
+    setTimeout(()=>{ el.textContent = text; }, 55);
+  }
+
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const cat = chip.dataset.cat;
+      if(cat === 'ALL'){
+        activeCats = new Set(['ALL']);
+      } else {
+        activeCats.delete('ALL');
+        if(activeCats.has(cat)) activeCats.delete(cat); else activeCats.add(cat);
+        if(activeCats.size === 0) activeCats = new Set(['ALL']);
+      }
+      document.querySelectorAll('.chip').forEach(c=>{
+        c.classList.toggle('active', activeCats.has(c.dataset.cat));
+      });
+    });
+  });
+
+  function pool(){
+    if(activeCats.has('ALL')) return TOPICS;
+    return TOPICS.filter(t => activeCats.has(t.cat));
+  }
+
+  function spin(){
+    if(spinning) return;
+    const options = pool();
+    if(options.length === 0) return;
+    spinning = true;
+    resetTimer(true);
+    setStatus('ready');
+    els.spinBtn.disabled = true;
+    els.startBtn.disabled = true;
+    els.explainedBtn.disabled = true;
+
+    let steps = 14;
+    let delay = 45;
+    let i = 0;
+
+    function step(){
+      const r = options[Math.floor(Math.random()*options.length)];
+      flip(els.domain, CAT_LABELS[r.cat]);
+      flip(els.topic, r.title.toUpperCase());
+      flip(els.gate, r.gate);
+      flip(els.note, r.note);
+      i++;
+      if(i < steps){
+        delay += 10;
+        setTimeout(step, delay);
+      } else {
+        current = r;
+        spinning = false;
+        els.spinBtn.disabled = false;
+        els.startBtn.disabled = false;
+        els.timerHint.textContent = "Topic locked in. Start the clock when you're ready to speak.";
+      }
+    }
+    step();
+  }
+
+  function resetTimer(silent){
+    clearInterval(timerInterval);
+    timerRunning = false;
+    secondsLeft = 60;
+    updateRing();
+    els.startBtn.textContent = 'Start 60s';
+    els.startBtn.disabled = !current;
+    els.resetBtn.disabled = true;
+    els.explainedBtn.disabled = !current;
+    setStatus(current ? 'ready' : 'ready');
+    if(!silent) els.timerHint.textContent = "Timer reset. Start again whenever you're ready.";
+  }
+
+  function updateRing(){
+    const frac = secondsLeft / 60;
+    const offset = RING_CIRC * (1 - frac);
+    els.ringFg.style.strokeDashoffset = offset;
+    const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+    els.ringTime.textContent = m + ':' + String(s).padStart(2,'0');
+    if(secondsLeft <= 10){
+      els.ringFg.style.stroke = 'var(--red)';
+      els.ringTime.style.color = 'var(--red)';
+    } else {
+      els.ringFg.style.stroke = 'var(--amber)';
+      els.ringTime.style.color = 'var(--text)';
+    }
+  }
+
+  function startTimer(){
+    if(!current || timerRunning) return;
+    timerRunning = true;
+    setStatus('boarding');
+    els.startBtn.textContent = 'Pause';
+    els.resetBtn.disabled = false;
+    els.timerHint.textContent = 'Speaking now — explain it before the gate closes.';
+    timerInterval = setInterval(()=>{
+      secondsLeft--;
+      updateRing();
+      if(secondsLeft <= 0){
+        clearInterval(timerInterval);
+        timerRunning = false;
+        setStatus('departed');
+        els.startBtn.textContent = 'Start 60s';
+        els.timerHint.textContent = 'Gate closed. Mark it explained, or reset to try again.';
+        if(current) addLog(current, false);
+      }
+    }, 1000);
+  }
+
+  function pauseTimer(){
+    clearInterval(timerInterval);
+    timerRunning = false;
+    els.startBtn.textContent = 'Resume';
+    setStatus('ready');
+    els.timerHint.textContent = "Paused. Resume when you're ready to keep going.";
+  }
+
+  els.startBtn.addEventListener('click', ()=>{
+    if(!current) return;
+    if(timerRunning){ pauseTimer(); } else { startTimer(); }
+  });
+  els.resetBtn.addEventListener('click', ()=> resetTimer(false));
+  els.spinBtn.addEventListener('click', spin);
+
+  els.explainedBtn.addEventListener('click', ()=>{
+    if(!current) return;
+    clearInterval(timerInterval);
+    timerRunning = false;
+    setStatus('departed');
+    els.timerHint.textContent = 'Nice — logged as explained. Spin for the next one.';
+    addLog(current, true);
+    els.explainedBtn.disabled = true;
+  });
+
+  function addLog(topic, completed){
+    const d = new Date();
+    log.unshift({
+      time: d.toLocaleTimeString('en-GB', {hour12:false, hour:'2-digit', minute:'2-digit'}),
+      cat: CAT_LABELS[topic.cat],
+      title: topic.title,
+      ok: completed
+    });
+    renderLog();
+  }
+
+  function renderLog(){
+    if(log.length === 0){
+      els.logList.innerHTML = '<div class="log-empty">No departures yet. Spin the board to log your first topic.</div>';
+      return;
+    }
+    els.logList.innerHTML = log.map(e => `
+      <div class="log-entry">
+        <div class="log-time">${e.time}</div>
+        <div class="log-cat">${e.cat}</div>
+        <div class="log-title-txt">${e.title}</div>
+        <div class="log-status ${e.ok ? 'ok' : 'missed'}">${e.ok ? 'Explained' : 'Missed'}</div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('btn-clear-log').addEventListener('click', ()=>{
+    log = [];
+    renderLog();
+  });
+
+  updateRing();
+})();
+</script>
+</body>
+</html>
