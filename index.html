@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BYTESPIN — Topic Roulette</title>
+<title>DEPARTURES — Topic Roulette</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiMwYTBkMGMiLz4KICA8cmVjdCB4PSIxMCIgeT0iMTYiIHdpZHRoPSI0NCIgaGVpZ2h0PSIzMiIgcng9IjMiIGZpbGw9IiMxODFkMWEiIHN0cm9rZT0iIzI2MmIyNyIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8cmVjdCB4PSIxMCIgeT0iMzAuNSIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEuNCIgZmlsbD0iIzAwMDAwMCIgb3BhY2l0eT0iMC41NSIvPgogIDx0ZXh0IHg9IjMyIiB5PSIzMCIgZm9udC1mYW1pbHk9IklCTSBQbGV4IE1vbm8sIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1zaXplPSIxNSIgZmlsbD0iI2ZmYjAyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RDwvdGV4dD4KICA8dGV4dCB4PSIzMiIgeT0iNDUiIGZvbnQtZmFtaWx5PSJJQk0gUGxleCBNb25vLCBtb25vc3BhY2UiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMTUiIGZpbGw9IiNmZmIwMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlA8L3RleHQ+CiAgPGNpcmNsZSBjeD0iNDkiIGN5PSIxMiIgcj0iNCIgZmlsbD0iI2ZmYjAyMCIvPgo8L3N2Zz4K">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -230,7 +230,7 @@
 
   <header>
     <div>
-      <div class="brand"><span class="glyph">⟡</span><h1>BYTESPIN</h1></div>
+      <div class="brand"><span class="glyph">⟡</span><h1>DEPARTURES</h1></div>
       <div class="tagline">Pull a topic. Explain it before the gate closes.</div>
     </div>
     <div class="clock-block">
@@ -267,6 +267,8 @@
       <button class="chip" data-cat="AI ENG">AI Eng</button>
       <button class="chip" data-cat="SOFTWARE">Software</button>
       <button class="chip" data-cat="SYSTEMS">Systems</button>
+      <button class="chip" data-cat="SYS DESIGN">Sys Design</button>
+      <button class="chip" data-cat="DBMS">DBMS</button>
       <button class="chip" data-cat="DATA/ML">Data/ML</button>
       <button class="chip" data-cat="PRACTICE">Practice</button>
       <div class="spacer"></div>
@@ -383,10 +385,44 @@
     {cat:"PRACTICE", title:"Code Ownership Models", gate:"BASIC", note:"Strong ownership vs collective ownership — what's the trade?"},
     {cat:"PRACTICE", title:"Estimating Software Projects", gate:"BASIC", note:"Why are estimates so often wrong, and in one direction?"},
     {cat:"PRACTICE", title:"Documentation as a Practice", gate:"BASIC", note:"What makes docs get read instead of ignored?"},
-    {cat:"PRACTICE", title:"Least Privilege Principle", gate:"CORE", note:"Why give systems and people the least access that still works?"}
+    {cat:"PRACTICE", title:"Least Privilege Principle", gate:"CORE", note:"Why give systems and people the least access that still works?"},
+
+    // SYS DESIGN
+    {cat:"SYS DESIGN", title:"Design a URL Shortener", gate:"BASIC", note:"What's the core data model, and how do you generate short codes?"},
+    {cat:"SYS DESIGN", title:"Design a Rate Limiter", gate:"CORE", note:"Where does it live in the stack, and how does it scale across nodes?"},
+    {cat:"SYS DESIGN", title:"Design a News Feed", gate:"ADV", note:"Fan-out on write vs fan-out on read — when does each win?"},
+    {cat:"SYS DESIGN", title:"Design a Chat Application", gate:"ADV", note:"How do you handle delivery, ordering, and presence at scale?"},
+    {cat:"SYS DESIGN", title:"Design a Notification System", gate:"CORE", note:"How do you fan a single event out to push, email, and SMS reliably?"},
+    {cat:"SYS DESIGN", title:"Back-of-the-Envelope Estimation", gate:"BASIC", note:"How do you turn 'how many users' into real capacity numbers?"},
+    {cat:"SYS DESIGN", title:"API Gateway", gate:"BASIC", note:"What does a single front door for your services actually buy you?"},
+    {cat:"SYS DESIGN", title:"Designing for Read-Heavy vs Write-Heavy Systems", gate:"CORE", note:"How does the access pattern change your architecture?"},
+    {cat:"SYS DESIGN", title:"Idempotency Keys in Distributed Systems", gate:"CORE", note:"How do you make a retried request safe end-to-end?"},
+    {cat:"SYS DESIGN", title:"Design a Distributed File Storage System", gate:"ADV", note:"How do systems like S3 stay durable across failures?"},
+    {cat:"SYS DESIGN", title:"Design a Web Crawler", gate:"ADV", note:"How do you avoid loops, duplicates, and hammering one host?"},
+    {cat:"SYS DESIGN", title:"Design an Autocomplete / Typeahead System", gate:"CORE", note:"What data structure makes prefix search fast at scale?"},
+    {cat:"SYS DESIGN", title:"Single Point of Failure & Redundancy", gate:"BASIC", note:"How do you design so no one component can take the system down?"},
+    {cat:"SYS DESIGN", title:"Designing a Payment System", gate:"ADV", note:"How do you guarantee a transaction happens exactly once?"},
+    {cat:"SYS DESIGN", title:"Push vs Pull Architectures", gate:"BASIC", note:"When does the server tell the client, versus the client asking?"},
+
+    // DBMS
+    {cat:"DBMS", title:"ACID Properties", gate:"BASIC", note:"What does each letter actually guarantee, with a real example?"},
+    {cat:"DBMS", title:"Database Normalization", gate:"CORE", note:"Why split data into tables instead of one big flat table?"},
+    {cat:"DBMS", title:"Indexes: B-Trees vs Hash Indexes", gate:"CORE", note:"Why does one help with range queries and the other doesn't?"},
+    {cat:"DBMS", title:"Transaction Isolation Levels", gate:"ADV", note:"What actually goes wrong at each level, concretely?"},
+    {cat:"DBMS", title:"SQL vs NoSQL", gate:"BASIC", note:"What's the real decision criterion, beyond 'schema vs no schema'?"},
+    {cat:"DBMS", title:"Database Locking: Optimistic vs Pessimistic", gate:"CORE", note:"How does each approach handle two writers hitting the same row?"},
+    {cat:"DBMS", title:"Joins: Inner, Outer, and Their Cost", gate:"BASIC", note:"Why can a join silently make a query fall over at scale?"},
+    {cat:"DBMS", title:"Database Replication", gate:"CORE", note:"What do you gain and what can go stale with a replica?"},
+    {cat:"DBMS", title:"Write-Ahead Logging", gate:"ADV", note:"How does a database survive a crash mid-write?"},
+    {cat:"DBMS", title:"Query Optimization & Execution Plans", gate:"CORE", note:"How does the database decide how to actually run your SQL?"},
+    {cat:"DBMS", title:"Deadlocks in Databases", gate:"CORE", note:"How do two transactions end up waiting on each other forever?"},
+    {cat:"DBMS", title:"Database Sharding vs Partitioning", gate:"ADV", note:"What's actually different between these two often-confused terms?"},
+    {cat:"DBMS", title:"MVCC (Multi-Version Concurrency Control)", gate:"ADV", note:"How do readers avoid blocking writers, and vice versa?"},
+    {cat:"DBMS", title:"Foreign Keys & Referential Integrity", gate:"BASIC", note:"What breaks in your data if you drop this constraint?"},
+    {cat:"DBMS", title:"OLTP vs OLAP", gate:"BASIC", note:"Why can't one database be great at both jobs at once?"}
   ];
 
-  const CAT_LABELS = { "AI ENG":"AI ENGINEERING", "SOFTWARE":"SOFTWARE DEV", "SYSTEMS":"SYSTEMS & INFRA", "DATA/ML":"DATA & ML", "PRACTICE":"PRACTICE & PROCESS" };
+  const CAT_LABELS = { "AI ENG":"AI ENGINEERING", "SOFTWARE":"SOFTWARE DEV", "SYSTEMS":"SYSTEMS & INFRA", "SYS DESIGN":"SYSTEM DESIGN", "DBMS":"DATABASES (DBMS)", "DATA/ML":"DATA & ML", "PRACTICE":"PRACTICE & PROCESS" };
 
   let activeCats = new Set(["ALL"]);
   let current = null;
